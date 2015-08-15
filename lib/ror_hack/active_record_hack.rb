@@ -1,3 +1,4 @@
+require 'request_store'
 module RorHack
 
   module ActiveRecordBaseSingletonClassHack
@@ -87,7 +88,7 @@ module RorHack
     # 返回某个枚举字段的英文对应的locales名称。
     def method_missing(method, *args, &block)
       method_name = method.to_s
-      naked_name = method_name.remove('_chinese_desc')
+      naked_name  = method_name.remove('_chinese_desc')
       if method_name.end_with?('_chinese_desc') && respond_to?(naked_name)
         return self.class.ming("#{ naked_name }.#{ self.send naked_name }")
       end
@@ -95,10 +96,64 @@ module RorHack
     end
   end
 
+  module ControllerRequestUglyInject
+    def self.included(mod)
+      ActionController::Base.class_eval do
+        before_filter do
+          params                                 = {
+            user:       (current_user rescue nil),
+            request_ip: request.env['HTTP_X_REAL_IP'] || request.remote_ip,
+            session:    session
+          }
+          RequestStore.store[:controller_params] = OpenStruct.new(params).freeze
+        end
+      end
+      mod.class_eval do
+        delegate :dingo_info, to: :class
+
+        def self.dingo_info
+          if RequestStore.store.key?(:controller_params)
+            RequestStore.store.fetch(:controller_params)
+          else
+            OpenStruct.new.freeze
+          end
+        end
+      end
+    end
+  end
+
+  # 用于定义可在类继承连上继承的实例变量。区别于了变量，兄弟类之间不会互相影响。
+  module ClassLevelInheritableAttributes
+    def self.included(base)
+      base.extend(ClassMethods)
+    end
+
+    module ClassMethods
+      def inheritable_attributes(*args)
+        @inheritable_attributes ||= [:inheritable_attributes]
+        @inheritable_attributes += args
+        args.each do |arg|
+          class_eval <<-RUBY
+          class << self; attr_accessor :#{arg} end
+          RUBY
+        end
+        @inheritable_attributes
+      end
+
+      def inherited(subclass)
+        super
+        (@inheritable_attributes||[]).each do |inheritable_attribute|
+          instance_var = "@#{inheritable_attribute}"
+          subclass.instance_variable_set(instance_var, instance_variable_get(instance_var))
+        end
+      end
+    end
+  end
+
 end
 
 class ActiveRecord::Base
   extend RorHack::ActiveRecordBaseSingletonClassHack
-  include RorHack::ClassLevelInheritableAttributes
   include RorHack::ActiveRecordBaseHack
+  include RorHack::ControllerRequestUglyInject
 end
