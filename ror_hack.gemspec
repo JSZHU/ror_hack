@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["happyming9527@gmail.com"]
   spec.summary       = %q{ruby on rails library hack.}
   spec.description   = %q{add some methods to modules of ruby or rails.}
-  spec.homepage      = ""
+  spec.homepage      = "https://github.com/happyming9527"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0")
@@ -19,6 +19,6 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_development_dependency "bundler", "~> 1.5"
-  spec.add_development_dependency "rake"
-  spec.add_dependency 'request_store'
+  spec.add_development_dependency "rake", "~> 10.4"
+  spec.add_dependency 'request_store', "~> 1.0"
 end
