@@ -1,5 +1,14 @@
 module RorHack
   module ObjectHack
+
+    def current_namespace(str)
+      "#{self.parent_name}::#{str.to_s.camelize}"
+    end
+
+    def current_class_namespace(str)
+      "#{self.class.parent_name}::#{str.to_s.camelize}"
+    end
+
     def exist_and_eql?(other)
       self && (self == other)
     end
