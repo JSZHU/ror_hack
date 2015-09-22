@@ -5,13 +5,19 @@ module RorHack
     end
 
     def method_missing(m, *args)
-      @bindings.reverse_each do |bind|
+
+      # 在绑定的列表中迭代，一旦可以执行这个变量或方法的，返回执行的结果。
+      @bindings.each do |bind|
+
+        # 假设为方法
         begin
           method = eval("method(%s)" % m.inspect, bind)
         rescue NameError
         else
           return method.call(*args)
         end
+
+        # 假设为变量
         begin
           value = eval(m.to_s, bind)
           return value
@@ -29,10 +35,6 @@ module RorHack
       @bindings.push obj.instance_eval { binding }
     end
 
-    def push_hash(vars)
-      push_instance Struct.new(*vars.keys).new(*vars.values)
-    end
-
     def run_proc(p, *args)
       instance_exec(*args, &p)
     end
@@ -40,7 +42,7 @@ module RorHack
 
   module ProcHack
     def call_with_binding(bind, *args)
-      LookupStack.new([bind]).run_proc(self, *args)
+      LookupStack.new(Array(bind)).run_proc(self, *args)
     end
   end
 

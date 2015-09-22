@@ -99,13 +99,16 @@ module RorHack
   module ControllerRequestUglyInject
     def self.included(mod)
       ActionController::Base.class_eval do
-        before_filter do
-          params                                 = {
-            user:       (current_user rescue nil),
-            request_ip: request.env['HTTP_X_REAL_IP'] || request.remote_ip,
-            session:    session
-          }
-          RequestStore.store[:controller_params] = OpenStruct.new(params).freeze
+        unless instance_variable_get(:@controll_request_ugly_inject)
+          before_filter do
+            params                                 = {
+              user:       (current_user rescue nil),
+              request_ip: request.env['HTTP_X_REAL_IP'] || request.remote_ip,
+              session:    session
+            }
+            RequestStore.store[:controller_params] = OpenStruct.new(params).freeze
+          end
+          instance_variable_set(:@controll_request_ugly_inject, true)
         end
       end
       mod.class_eval do
