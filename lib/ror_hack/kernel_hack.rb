@@ -29,3 +29,6 @@ end
 module Kernel
   include RorHack::KernelHack
 end
+
+# Object need refresh included Kernel module or methods cant inherit, maybe this is a ruby bug?
+Object.send(:include, Kernel)
