@@ -8,7 +8,7 @@ module RorHack
     def yml_load_config(name, default_value='66dc9e58b19ecc4ec538ea771b71b372')
       name += '.yml' unless name.end_with?('.yml')
       if File.file?(File.join(Rails.root, '/config', name))
-        result = YAML.load_file(File.join(Rails.root, '/config', name))
+        result = YAML.load(ERB.new(File.read(File.join(Rails.root, '/config', name))).result)
         if result.is_a? Array
           return result
         else
@@ -16,7 +16,7 @@ module RorHack
         end
       else
         if default_value == '66dc9e58b19ecc4ec538ea771b71b372'
-          YAML.load_file(File.join(Rails.root, '/config', name))
+          YAML.load(ERB.new(File.read(File.join(Rails.root, '/config', name))).result)
         else
           return default_value
         end
