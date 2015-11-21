@@ -7,5 +7,6 @@ require 'ror_hack/nil_hack'
 require 'ror_hack/object_hack'
 require 'ror_hack/string_hack'
 require 'ror_hack/proc_hack'
+require 'ror_hack/reserved_hack'
 require 'ror_hack/version'
 
