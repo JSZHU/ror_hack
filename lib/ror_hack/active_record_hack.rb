@@ -100,7 +100,7 @@ module RorHack
     def self.included(mod)
       ActionController::Base.class_eval do
         unless instance_variable_get(:@controll_request_ugly_inject)
-          before_filter do
+          before_action do
             params                                 = {
               user:       (current_user rescue nil),
               request_ip: request.env['HTTP_X_REAL_IP'] || request.remote_ip,
