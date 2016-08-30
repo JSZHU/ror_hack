@@ -1,30 +1,6 @@
-require 'request_store'
 module RorHack
 
   module ActiveRecordBaseSingletonClassHack
-
-    # 用于模型使用view(视图)时的创建新对象后,获取的对象的id总是null或0的bug,需要建一个字段,这个方法应在放在所有其他before_create和after_create和after_commit的回调前面,并且视图中,应包含hash_column这个字段,实际上hash_column字段是在real_model这个模型的对应表中.
-    def use_mysql_view(real_model, *args)
-      opts             = args.extract_options!.with_indifferent_access
-      self.primary_key = 'id'
-      hash_column      = (opts[:hash_column]||'mysql_view_bug_fix_id').to_s
-      fails '没有设置hash列。' unless hash_column.in?(real_model.column_names) && hash_column.in?(self.column_names)
-
-      after_initialize do
-        self.id = nil if id.is?(0)
-      end
-
-      before_create do
-        begin
-          self[hash_column] = SecureRandom.hex
-        end while real_model.exists?(hash_column => self[hash_column])
-      end
-
-      after_create do
-        id      = real_model.find_by(hash_column => self[hash_column]).id
-        self.id = id
-      end
-    end
 
     def in_and_ref(table)
       includes(table).references(table.to_s.pluralize)
@@ -96,39 +72,9 @@ module RorHack
     end
   end
 
-  module ControllerRequestUglyInject
-    def self.included(mod)
-      ActionController::Base.class_eval do
-        unless instance_variable_get(:@controll_request_ugly_inject)
-          before_action do
-            params                                 = {
-              user:       (current_user rescue nil),
-              request_ip: request.env['HTTP_X_REAL_IP'] || request.remote_ip,
-              session:    session
-            }
-            RequestStore.store[:controller_params] = OpenStruct.new(params).freeze
-          end
-          instance_variable_set(:@controll_request_ugly_inject, true)
-        end
-      end
-      mod.class_eval do
-        delegate :dingo_info, to: :class
-
-        def self.dingo_info
-          if RequestStore.store.key?(:controller_params)
-            RequestStore.store.fetch(:controller_params)
-          else
-            OpenStruct.new.freeze
-          end
-        end
-      end
-    end
-  end
-
 end
 
 class ActiveRecord::Base
   extend RorHack::ActiveRecordBaseSingletonClassHack
   include RorHack::ActiveRecordBaseHack
-  include RorHack::ControllerRequestUglyInject
 end
